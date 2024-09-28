@@ -44,10 +44,10 @@ for (i in 1:nrow(daily_news)){
  
 ```
 
-```{r}
-saveRDS(daily_news, paste0("daily_news","_til_",Sys.Date(),".rds"))
-```
 
+```{r}
+saveRDS(daily_news, paste0("daily_news_",Sys.Date(),".rds"))
+```
 
 
 # Collections of questions
