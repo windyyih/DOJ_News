@@ -1,0 +1,138 @@
+---
+title: "Daily_DOJ_News"
+output: html_document
+date: "2024-09-28"
+editor_options: 
+  chunk_output_type: console
+---
+
+# Loading libraries
+
+```{r}
+library(tidyRSS)
+library(dplyr)
+library(rvest)
+library(httr)
+library(stringr)
+library(jsonlite)
+```
+
+# Fetching data
+```{r}
+daily_news = tidyfeed(
+ feed = "https://www.justice.gov/news/rss?type=press_release&m=1",
+ config = list(),
+ clean_tags = TRUE,
+ list = FALSE,
+ parse_dates = TRUE
+ )%>%
+  select(-c("feed_link","feed_language","item_category","item_guid"))
+```
+
+```{r}
+for (i in 1:nrow(daily_news)){
+  
+  html = read_html(daily_news$item_link[i])
+  mainbody = html%>%
+    html_node("div.node-body")%>%
+    html_text()
+  
+  daily_news$mainbody[i] = mainbody
+  
+  Sys.sleep(5)
+}
+ 
+```
+
+```{r}
+saveRDS(daily_news, paste0("daily_news","_til_",Sys.Date(),".rds"))
+```
+
+
+
+# Collections of questions
+```{r eval=FALSE, include=FALSE}
+# Collection of questions
+questions <- c(
+ "Who is the subject in the legal case or event?",
+  "Who is the object or target of the legal action?",
+  "What is the legal action or charge being described?",
+  "What is the outcome of the case (if any)?",
+  "What is the length of the sentence (if applicable)?",
+  "What is the amount of the fine or financial penalty (if applicable)?",
+  "Are there any notable legal arguments or defenses mentioned?",
+  "What legal provisions or laws are referenced in the news?",
+  "Is there any mention of appeals or future legal actions?",
+  "Who are the lawyers, judges, or legal representatives involved in the case?"
+)
+```
+
+# Saving the API
+```{r eval=FALSE, include=FALSE}
+# Set your OpenAI API key
+api_key <- ""
+```
+
+
+# Setting up chatgpt analysis
+```{r eval=FALSE, include=FALSE}
+# Define a function to call the OpenAI API with specific questions
+ask_questions_about_text <- function(mainbody, questions) {
+  url <- "https://api.openai.com/v1/chat/completions"
+  
+  # Prepare the prompt with specific questions
+  prompt <- paste(
+    "Here is a piece of text:\n", mainbody,
+    "\nPlease give me simple answers (or not applicable) to the following questions based on this text:\n",
+    paste(questions, collapse = "\n")
+  )
+  
+  # Construct the API request body
+  body <- list(
+    model = "gpt-4o-mini",  # or use gpt-3.5-turbo
+    messages = list(
+      list(role = "system", content = "You are an assistant."),
+      list(role = "user", content = prompt)
+    ),
+    max_tokens = 2000  # Adjust as needed to handle long answers
+  )
+  
+  # Send the request
+  response <- POST(url, 
+                   add_headers(Authorization = paste("Bearer", api_key)),
+                   content_type("application/json"),  # Correct usage of content type
+                   body = toJSON(body, auto_unbox = TRUE))
+  
+  # Parse the response
+  result <- fromJSON(content(response, as = "text", encoding = "UTF-8"))
+  
+  # Extract the answers from the result
+  #answers <- result$choices[[1]]$message$content
+  return(result)
+}
+
+
+
+answers <- ask_questions_about_text(mainbody, questions)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
